@@ -15,10 +15,15 @@ The script generates:
     - oer_free_energy.png
 
 Usage:
-    python3 oer_free_energy.py
+    python3 oer_free_energy.py DG1 DG2 DG3 DG4
+
+Example:
+    python3 oer_free_energy.py 1.10 1.45 1.80 0.57
 
 Author: Radha Somaiya
 """
+
+import argparse
 
 import matplotlib
 
@@ -299,9 +304,6 @@ def plot_oer_free_energy(
 
     # --------------------------------------------------------
     # U = 0 V profile
-    #
-    # Black solid horizontal levels
-    # Black dashed connectors
     # --------------------------------------------------------
 
     draw_profile(
@@ -315,9 +317,6 @@ def plot_oer_free_energy(
 
     # --------------------------------------------------------
     # U = 1.23 V profile
-    #
-    # Red solid horizontal levels
-    # Red dotted connectors
     # --------------------------------------------------------
 
     draw_profile(
@@ -434,9 +433,6 @@ def plot_oer_free_energy(
 
     # --------------------------------------------------------
     # Tick formatting
-    #
-    # Bottom and left axes only.
-    # No ticks/scales on top or right.
     # --------------------------------------------------------
 
     ax.tick_params(
@@ -567,6 +563,53 @@ def print_results(
 
 
 # ============================================================
+# COMMAND-LINE INPUT
+# ============================================================
+
+def parse_arguments():
+    """
+    Read the four OER step free energies from the command line.
+
+    Example:
+
+        python3 oer_free_energy.py 1.10 1.45 1.80 0.57
+    """
+
+    parser = argparse.ArgumentParser(
+        description=(
+            "Analyze four OER free-energy steps and generate "
+            "a publication-style free-energy diagram."
+        )
+    )
+
+    parser.add_argument(
+        "delta_g1",
+        type=float,
+        help="Delta G for * -> *OH in eV",
+    )
+
+    parser.add_argument(
+        "delta_g2",
+        type=float,
+        help="Delta G for *OH -> *O in eV",
+    )
+
+    parser.add_argument(
+        "delta_g3",
+        type=float,
+        help="Delta G for *O -> *OOH in eV",
+    )
+
+    parser.add_argument(
+        "delta_g4",
+        type=float,
+        help="Delta G for *OOH -> * + O2 in eV",
+    )
+
+    return parser.parse_args()
+
+
+# ============================================================
 # MAIN
 # ============================================================
 
@@ -576,25 +619,16 @@ def main():
     """
 
     # --------------------------------------------------------
-    # INPUT
-    # --------------------------------------------------------
-    #
-    # Illustrative OER step free energies at U = 0 V.
-    #
-    # Delta G1: *      -> *OH
-    # Delta G2: *OH    -> *O
-    # Delta G3: *O     -> *OOH
-    # Delta G4: *OOH   -> * + O2
-    #
-    # For conventional four-electron OER, the sum should
-    # normally be approximately 4.92 eV.
+    # READ COMMAND-LINE INPUT
     # --------------------------------------------------------
 
+    args = parse_arguments()
+
     delta_g = [
-        1.10,
-        1.45,
-        1.80,
-        0.57,
+        args.delta_g1,
+        args.delta_g2,
+        args.delta_g3,
+        args.delta_g4,
     ]
 
     # --------------------------------------------------------
