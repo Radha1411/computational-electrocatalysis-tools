@@ -13,6 +13,7 @@ The script reports:
 
 The script generates:
     - oer_free_energy.png
+    - oer_summary.csv
 
 Usage:
     python3 oer_free_energy.py DG1 DG2 DG3 DG4
@@ -24,6 +25,7 @@ Author: Radha Somaiya
 """
 
 import argparse
+import csv
 
 import matplotlib
 
@@ -94,14 +96,6 @@ def cumulative_free_energies(delta_g):
     """
     Convert individual OER step free energies into
     cumulative free energies.
-
-    Example:
-
-        Delta G = [1.10, 1.45, 1.80, 0.57]
-
-    gives:
-
-        [0.00, 1.10, 2.55, 4.35, 4.92]
     """
 
     energies = [0.0]
@@ -129,19 +123,6 @@ def apply_potential(energies, potential):
         G_n(U) = G_n(0) - nU
 
     where n is the number of transferred proton-electron pairs.
-
-    Parameters
-    ----------
-    energies : list of float
-        Cumulative free energies at U = 0 V.
-
-    potential : float
-        Applied potential in V vs RHE.
-
-    Returns
-    -------
-    list of float
-        Potential-dependent cumulative free energies.
     """
 
     shifted_energies = []
@@ -174,26 +155,6 @@ def draw_profile(
 ):
     """
     Draw a publication-style free-energy profile.
-
-    Parameters
-    ----------
-    ax : matplotlib axis
-        Axis on which the profile is drawn.
-
-    energies : list of float
-        Cumulative free energies.
-
-    color : str
-        Color of horizontal levels and connectors.
-
-    connector_style : str
-        Line style used to connect neighboring states.
-
-    line_width : float
-        Width of horizontal intermediate levels.
-
-    connector_width : float
-        Width of connecting lines.
     """
 
     number_of_states = len(energies)
@@ -202,10 +163,7 @@ def draw_profile(
 
     for i, energy in enumerate(energies):
 
-        # ----------------------------------------------------
         # Solid horizontal intermediate level
-        # ----------------------------------------------------
-
         ax.plot(
             [
                 i - level_half_width,
@@ -221,10 +179,7 @@ def draw_profile(
             solid_capstyle="butt",
         )
 
-        # ----------------------------------------------------
         # Connector to next intermediate
-        # ----------------------------------------------------
-
         if i < number_of_states - 1:
 
             next_energy = energies[i + 1]
@@ -265,26 +220,14 @@ def plot_oer_free_energy(
             red dotted connectors
     """
 
-    # --------------------------------------------------------
-    # Cumulative energies at U = 0 V
-    # --------------------------------------------------------
-
     energies_0 = cumulative_free_energies(
         delta_g
     )
-
-    # --------------------------------------------------------
-    # Energies at U = 1.23 V
-    # --------------------------------------------------------
 
     energies_123 = apply_potential(
         energies_0,
         1.23,
     )
-
-    # --------------------------------------------------------
-    # Reaction intermediates
-    # --------------------------------------------------------
 
     states = [
         r"$*$",
@@ -294,18 +237,11 @@ def plot_oer_free_energy(
         r"$*+\mathrm{O_2}$",
     ]
 
-    # --------------------------------------------------------
-    # Create figure
-    # --------------------------------------------------------
-
     fig, ax = plt.subplots(
         figsize=(7.5, 5.5)
     )
 
-    # --------------------------------------------------------
     # U = 0 V profile
-    # --------------------------------------------------------
-
     draw_profile(
         ax,
         energies_0,
@@ -315,10 +251,7 @@ def plot_oer_free_energy(
         connector_width=1.5,
     )
 
-    # --------------------------------------------------------
     # U = 1.23 V profile
-    # --------------------------------------------------------
-
     draw_profile(
         ax,
         energies_123,
@@ -328,10 +261,7 @@ def plot_oer_free_energy(
         connector_width=1.8,
     )
 
-    # --------------------------------------------------------
     # Energy labels for U = 0 V
-    # --------------------------------------------------------
-
     for i, energy in enumerate(
         energies_0
     ):
@@ -346,10 +276,7 @@ def plot_oer_free_energy(
             color="black",
         )
 
-    # --------------------------------------------------------
     # Legend
-    # --------------------------------------------------------
-
     legend_handles = [
         Line2D(
             [0],
@@ -377,10 +304,7 @@ def plot_oer_free_energy(
         handlelength=3.0,
     )
 
-    # --------------------------------------------------------
     # Axis limits
-    # --------------------------------------------------------
-
     ax.set_xlim(
         -0.55,
         4.55,
@@ -404,10 +328,7 @@ def plot_oer_free_energy(
         maximum_energy + 0.55,
     )
 
-    # --------------------------------------------------------
     # X axis
-    # --------------------------------------------------------
-
     ax.set_xticks(
         range(len(states))
     )
@@ -422,19 +343,13 @@ def plot_oer_free_energy(
         fontsize=12,
     )
 
-    # --------------------------------------------------------
     # Y axis
-    # --------------------------------------------------------
-
     ax.set_ylabel(
         r"$\Delta G$ (eV)",
         fontsize=12,
     )
 
-    # --------------------------------------------------------
     # Tick formatting
-    # --------------------------------------------------------
-
     ax.tick_params(
         axis="x",
         which="both",
@@ -461,20 +376,14 @@ def plot_oer_free_energy(
         labelsize=10,
     )
 
-    # --------------------------------------------------------
     # Border thickness
-    # --------------------------------------------------------
-
     for spine in ax.spines.values():
 
         spine.set_linewidth(
             1.3
         )
 
-    # --------------------------------------------------------
     # Save figure
-    # --------------------------------------------------------
-
     fig.tight_layout()
 
     fig.savefig(
@@ -484,6 +393,107 @@ def plot_oer_free_energy(
     )
 
     plt.close(fig)
+
+
+# ============================================================
+# CSV EXPORT
+# ============================================================
+
+def save_csv(
+    delta_g,
+    results,
+    filename="oer_summary.csv",
+):
+    """
+    Save OER step free energies and thermodynamic metrics
+    to a CSV file.
+    """
+
+    step_names = [
+        "* -> *OH",
+        "*OH -> *O",
+        "*O -> *OOH",
+        "*OOH -> * + O2",
+    ]
+
+    with open(
+        filename,
+        "w",
+        newline="",
+    ) as csvfile:
+
+        writer = csv.writer(
+            csvfile
+        )
+
+        writer.writerow(
+            [
+                "Step",
+                "Reaction",
+                "DeltaG_eV",
+            ]
+        )
+
+        for i, (
+            step_name,
+            value,
+        ) in enumerate(
+            zip(
+                step_names,
+                delta_g,
+            ),
+            start=1,
+        ):
+
+            writer.writerow(
+                [
+                    i,
+                    step_name,
+                    f"{value:.6f}",
+                ]
+            )
+
+        writer.writerow([])
+
+        writer.writerow(
+            [
+                "Metric",
+                "Value",
+                "Unit",
+            ]
+        )
+
+        writer.writerow(
+            [
+                "Potential-determining step",
+                results["pds_step"],
+                "",
+            ]
+        )
+
+        writer.writerow(
+            [
+                "Maximum Delta G",
+                f"{results['maximum_delta_g']:.6f}",
+                "eV",
+            ]
+        )
+
+        writer.writerow(
+            [
+                "Limiting potential",
+                f"{results['limiting_potential']:.6f}",
+                "V",
+            ]
+        )
+
+        writer.writerow(
+            [
+                "OER overpotential",
+                f"{results['overpotential']:.6f}",
+                "V",
+            ]
+        )
 
 
 # ============================================================
@@ -561,6 +571,11 @@ def print_results(
         "oer_free_energy.png"
     )
 
+    print(
+        "Results saved to: "
+        "oer_summary.csv"
+    )
+
 
 # ============================================================
 # COMMAND-LINE INPUT
@@ -618,10 +633,7 @@ def main():
     Main program.
     """
 
-    # --------------------------------------------------------
-    # READ COMMAND-LINE INPUT
-    # --------------------------------------------------------
-
+    # Read command-line input
     args = parse_arguments()
 
     delta_g = [
@@ -631,27 +643,25 @@ def main():
         args.delta_g4,
     ]
 
-    # --------------------------------------------------------
-    # ANALYSIS
-    # --------------------------------------------------------
-
+    # Thermodynamic analysis
     results = calculate_oer_metrics(
         delta_g
     )
 
-    # --------------------------------------------------------
-    # GENERATE FIGURE
-    # --------------------------------------------------------
-
+    # Generate free-energy figure
     plot_oer_free_energy(
         delta_g,
         "oer_free_energy.png",
     )
 
-    # --------------------------------------------------------
-    # TERMINAL OUTPUT
-    # --------------------------------------------------------
+    # Save CSV results
+    save_csv(
+        delta_g,
+        results,
+        "oer_summary.csv",
+    )
 
+    # Print terminal summary
     print_results(
         delta_g,
         results,
