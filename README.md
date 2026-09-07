@@ -2,7 +2,7 @@
 
 Python workflows for computational electrocatalysis, including computational hydrogen electrode (CHE) analysis, oxygen evolution reaction (OER) thermodynamics, limiting-potential calculations, and potential-dependent surface phase stability.
 
-The repository is intended to provide lightweight and reusable tools for converting first-principles energetics into electrochemical thermodynamic quantities and publication-ready visualizations.
+The repository provides lightweight and reusable tools for converting first-principles energetics into electrochemical thermodynamic quantities and publication-ready visualizations.
 
 ## Features
 
@@ -65,12 +65,12 @@ For the four OER steps,
 
 ```text
 * + H2O  -> *OH + H+ + e-
-*OH      -> *O  + H+ + e-
+*OH      -> *O + H+ + e-
 *O + H2O -> *OOH + H+ + e-
 *OOH     -> * + O2 + H+ + e-
 ```
 
-the script accepts the four reaction free energies at \(U=0\) V.
+the script accepts the four reaction free energies at `U = 0 V`.
 
 ### Usage
 
@@ -118,9 +118,9 @@ oer_summary.csv
 
 Extends the conventional OER free-energy analysis by explicitly comparing the reaction profile at:
 
-- \(U=0\) V
-- \(U=1.23\) V
-- the calculated limiting potential \(U_L\)
+- `U = 0 V`
+- `U = 1.23 V`
+- the calculated limiting potential `U_L`
 
 ### Usage
 
@@ -229,17 +229,56 @@ O_O_O_O
 
 Different arrangements at the same overall OH/O coverage can be supplied independently. This allows inequivalent active sites and different adsorbate arrangements to be compared explicitly.
 
-The surface free energies are evaluated as a function of applied potential according to the thermodynamic formulation implemented in the script:
+### Thermodynamic Formulation
+
+The four surface sites are constructed by adding four oxygen-containing groups to the pristine surface.
+
+For a surface containing `(4-n)` OH species and `n` O species, the corresponding electrochemical reaction is written as:
 
 ```text
-ΔG(U) = ΔG(0) - nU
+pristine + 4H2O -> surface(OH)_(4-n)O_n + n(H+ + e-)
 ```
 
-where n is determined from the surface configuration.
+Here, `n` is the number of surface O species. Each OH → O conversion corresponds to the removal of one proton-electron pair.
 
-No OH/O surface configuration is shifted to zero. All supplied surface phases are evaluated on the same thermodynamic scale.
+Using the computational hydrogen electrode (CHE) relation,
 
-The script then determines the configuration with the lowest free energy at every potential and constructs the corresponding stable-phase diagram.
+```text
+G(H+ + e-) = 1/2 G(H2) - U
+```
+
+the potential-dependent surface free energy is:
+
+```text
+ΔG(U) = E_surface - E_pristine - 4G(H2O)
+        + n/2 G(H2) - nU
+```
+
+Therefore, configurations containing 0, 1, 2, 3, and 4 O species have potential-dependent terms of:
+
+```text
+0
+-U
+-2U
+-3U
+-4U
+```
+
+respectively.
+
+For example:
+
+```text
+OH_OH_OH_OH  -> n = 0
+OH_O_OH_OH   -> n = 1
+OH_O_O_OH    -> n = 2
+O_O_O_OH     -> n = 3
+O_O_O_O      -> n = 4
+```
+
+No OH/O surface configuration is shifted to zero. All supplied surface phases are evaluated using the same thermodynamic reference.
+
+The thermodynamically stable surface at a given potential is the configuration with the lowest calculated free energy.
 
 ### Input CSV
 
@@ -263,7 +302,7 @@ A complete example input is available at:
 examples/surface_energies_example.csv
 ```
 
-The user is not required to provide all possible configurations. Only explicitly calculated configurations are compared.
+The user is not required to provide all possible configurations. Only explicitly supplied configurations are compared.
 
 ### Usage
 
@@ -280,7 +319,7 @@ examples/surface_energies_example.csv \
 --target 1.23
 ```
 
-All numerical values in this example are synthetic.
+All numerical values in this example are synthetic and are intended only to demonstrate the workflow.
 
 The main command-line options are:
 
@@ -317,22 +356,24 @@ The workflow:
 8. exports the complete potential-dependent dataset, and
 9. generates a surface phase diagram with a stable-phase map.
 
-The phase-transition potential between two stable configurations is obtained from the intersection of their free-energy lines.
+### Surface Phase Transitions
 
-For
+For two configurations with free energies
 
 ```text
 ΔG1(U) = b1 - n1 U
 ΔG2(U) = b2 - n2 U
 ```
 
-the transition occurs at
+their transition potential is obtained from the intersection:
 
 ```text
-Utransition = (b2 - b1) / (n2 - n1)
+U_transition = (b2 - b1) / (n2 - n1)
 ```
 
-when \(n_1 \ne n_2\).
+for `n1 != n2`.
+
+The stable phase is the configuration with the minimum free energy at a given potential.
 
 ---
 
@@ -340,17 +381,21 @@ when \(n_1 \ne n_2\).
 
 The workflows in this repository use the computational hydrogen electrode (CHE) framework to introduce electrochemical potential dependence into DFT-derived reaction and surface thermodynamics.
 
-For a proton-electron transfer,
+For a proton-electron pair,
 
 ```text
 H+ + e-
 ```
 
-the electrochemical potential is related to the hydrogen reference through the CHE formalism.
+the CHE relation is:
 
-For an electrochemical state involving `n` potential-dependent electron transfers, the corresponding free energy varies linearly with applied potential according to the reaction convention implemented in the relevant script.
+```text
+G(H+ + e-) = 1/2 G(H2) - U
+```
 
-This enables DFT energetics to be used for constructing OER free-energy diagrams and potential-dependent surface stability diagrams.
+when energies are expressed in eV and the potential is expressed in V.
+
+This framework enables DFT energetics to be used for constructing OER free-energy diagrams and potential-dependent surface stability diagrams without explicitly calculating solvated protons and electrons.
 
 ---
 
@@ -361,6 +406,7 @@ This enables DFT energetics to be used for constructing OER free-energy diagrams
 - Free-energy corrections should be chosen consistently with the thermodynamic model being used.
 - The potential-determining step is a thermodynamic quantity and should not automatically be interpreted as the kinetic rate-determining step.
 - Surface phase diagrams describe relative thermodynamic stability among the configurations included in the calculation; they do not by themselves establish kinetic accessibility.
+- The surface-phase formulation assumes four oxygen-containing surface groups described as OH or O.
 - Example energies distributed with this repository are synthetic and are intended only for demonstrating the workflows.
 
 ## License
@@ -371,5 +417,6 @@ This project is licensed under the MIT License.
 
 **Radha Somaiya**
 
-Computational materials science and electrocatalysis  
+Computational materials science and electrocatalysis
+
 DFT | Computational electrocatalysis | Electrochemical thermodynamics | Surface stability
