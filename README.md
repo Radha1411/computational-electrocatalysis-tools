@@ -235,7 +235,7 @@ The surface free energies are evaluated as a function of applied potential accor
 ΔG(U) = ΔG(0) - nU
 ```
 
-where `n` is determined from the surface configuration.
+where `n` is the number of surface O species in the OH/O configuration. In the implemented four-site model, each OH → O conversion corresponds to the removal of one proton-electron pair, so configurations containing 0, 1, 2, 3, and 4 O species have potential dependences of 0, -U, -2U, -3U, and -4U, respectively.
 
 No OH/O surface configuration is shifted to zero. All supplied surface phases are evaluated on the same thermodynamic scale.
 
