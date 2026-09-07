@@ -372,4 +372,4 @@ This project is licensed under the MIT License.
 **Radha Somaiya**
 
 Computational materials science and electrocatalysis  
-DFT | Electrochemical thermodynamics | Surface stability | Python/ASE workflows
+DFT | Computational electrocatalysis | Electrochemical thermodynamics | Surface stability
